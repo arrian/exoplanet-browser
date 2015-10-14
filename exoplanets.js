@@ -9,7 +9,8 @@ var width = window.innerWidth,
     svg,
     nodes,
     force,
-    zoom;
+    zoom,
+    SUN_RADIUS_KM = 696000;
 
 var setSelection,
     color = d3.scale.quantize().range(["#156b87", "#876315", "#543510", "#872815"]);
@@ -95,7 +96,9 @@ node.transition()
 
 function tick(e) {
   node
-      .each(gravity(.002 * e.alpha))
+      //.each(gravity(.002 * e.alpha))
+      // .each(gravity(.0 * e.alpha))
+      // .each(collide(.5))
       .each(collide(.5))
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; });

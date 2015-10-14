@@ -10,7 +10,7 @@ var width = window.innerWidth,
     nodes,
     force,
     zoom,
-    SUN_RADIUS_KM = 696000;
+    JUPITER_RADIUS_KM = 71492;
 
 var setSelection,
     color = d3.scale.quantize().range(["#156b87", "#876315", "#543510", "#872815"]);
@@ -31,11 +31,27 @@ updateSelection = function(current, node) {
   }
 };
 
-nodes = objects.planets.filter(function(planet) {
+nodes = []
+
+objects.planets.forEach(function(planet) {
   planet.cx = width / 2;
   planet.cy = height / 2;
-  return planet.radius && planet.radius >= 1.0;
+  planet.name = planet.n;
+  planet.radius = planet.r / JUPITER_RADIUS_KM;
+  if(planet.radius >= 1.0) nodes.push(planet);
 });
+
+objects.stars.forEach(function(star) {
+  if(nodes.length > 1000) return;
+  star.cx = width / 2;
+  star.cx = width / 2;
+  star.cy = height / 2;
+  star.name = star.n;
+  star.radius = star.r / JUPITER_RADIUS_KM;
+  if(star.radius >= 1.0) nodes.push(star);
+});
+
+
 
 color.domain(d3.extent(nodes, function(d) { return d.radius; }));
 
@@ -97,8 +113,6 @@ node.transition()
 function tick(e) {
   node
       //.each(gravity(.002 * e.alpha))
-      // .each(gravity(.0 * e.alpha))
-      // .each(collide(.5))
       .each(collide(.5))
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; });

@@ -1,3 +1,4 @@
-# Exoplanet Browser
+# Planet Search Engine
 
-Exoplanet browser built with D3.js. Open `index.html` to begin browsing.
+Exoplanet search engine built with React. All full text searching occurs in the browser.
+

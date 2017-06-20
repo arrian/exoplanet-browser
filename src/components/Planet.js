@@ -1,6 +1,9 @@
 import React, { PropTypes } from 'react'
 import { Parallax } from 'react-parallax'
-import { Table, Header } from 'semantic-ui-react'
+import { Table, Header, Label } from 'semantic-ui-react'
+import { ColourMethod } from '../actions'
+
+const scale = require('scale-color-perceptual');
 
 class Planet extends React.Component {
   constructor(props) {
@@ -9,48 +12,29 @@ class Planet extends React.Component {
     this.epsilon = 0.0001;
   }
 
-  getRGBFromBV(bv) {
-    var t,
-        r = 0.0,
-        g = 0.0,
-        b = 0.0;
-
-    if (bv < -0.4) bv = -0.4;
-    if (bv > 2.0) bv = 2.0;
-
-    if ((bv>=-0.40) && (bv<0.00)) { t=(bv+0.40)/(0.00+0.40); r=0.61+(0.11*t)+(0.1*t*t); }
-    else if ((bv>= 0.00) && (bv<0.40)) { t=(bv-0.00)/(0.40-0.00); r=0.83+(0.17*t); }
-    else if ((bv>= 0.40) && (bv<2.10)) { t=(bv-0.40)/(2.10-0.40); r=1.00; }
-
-    if ((bv>=-0.40) && (bv<0.00)) { t=(bv+0.40)/(0.00+0.40); g=0.70+(0.07*t)+(0.1*t*t); }
-    else if ((bv>= 0.00) && (bv<0.40)) { t=(bv-0.00)/(0.40-0.00); g=0.87+(0.11*t); }
-    else if ((bv>= 0.40) && (bv<1.60)) { t=(bv-0.40)/(1.60-0.40); g=0.98-(0.16*t); }
-    else if ((bv>= 1.60) && (bv<2.00)) { t=(bv-1.60)/(2.00-1.60); g=0.82-(0.5*t*t); }
-    
-    if ((bv>=-0.40) && (bv<0.40)) { t=(bv+0.40)/(0.40+0.40); b=1.00; }
-    else if ((bv>= 0.40) && (bv<1.50)) { t=(bv-0.40)/(1.50-0.40); b=1.00-(0.47*t)+(0.1*t*t); }
-    else if ((bv>= 1.50) && (bv<1.94)) { t=(bv-1.50)/(1.94-1.50); b=0.63-(0.6*t*t); }
-
-    return `rgb(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)})`;
-  }
-
   hasRadius() {
-    return this.props.planet.R > this.epsilon;
+    return this.props.planet.radius > this.epsilon;
   }
 
-  hasDensity() {
-    return this.props.planet.DENSITY > this.epsilon;
+  hasTemperature() {
+    return this.props.planet.temp_calculated;
   }
 
   getRadius() {
     const planet = this.props.planet;
     const defaultRadius = 20;
-    return this.hasRadius() ? planet.R * 30 : defaultRadius;
+    return this.hasRadius() ? planet.radius * 30 : defaultRadius;
   }
 
   getColour() {
     const planet = this.props.planet;
-    return this.hasRadius() ? (planet.BMV ? this.getRGBFromBV(planet.BMV) : 'brown') : 'gray';
+    if(this.props.colourMethod === ColourMethod.TEMPERATURE) return this.hasRadius() && this.hasTemperature() ? scale.magma(Math.max(0.0, Math.min(1.0, planet.temp_calculated / 2500))) : 'gray';
+    
+    if(this.props.colourMethod === ColourMethod.MASS) return planet.mass ? scale.magma(Math.max(0.0, Math.min(1.0, planet.mass / 30))) : 'gray';
+    
+    if(this.isConfirmed()) return '#21BA45';
+    else if(this.isUnconfirmed()) return '#2185D0';
+    else return 'gray';
   }
 
   renderArrow() {
@@ -59,11 +43,11 @@ class Planet extends React.Component {
   }
 
   renderPlanet(limit) {
-    const radius = this.getRadius();
+    const radius = this.getRadius() * (this.hasRadius() ? this.props.scale : 1.0);
     const color = this.getColour();
     const diameter = radius * 2;
-    const circleSVG = <circle cx={radius} cy={radius} r={radius} fill={color} />;
-    const planetSVG = <svg height={limit ? Math.min(diameter, 80) : diameter} width={limit ? Math.min(diameter, 150) : diameter}>{circleSVG}{this.hasRadius() ? null : <text x={radius} y={radius} fill='black' textAnchor='middle' dy='.3em'>?</text>}</svg>
+    const circleSVG = <circle cx={limit ? Math.min(radius, 75) : radius} cy={radius} r={radius - (this.hasRadius() ? 0 : 3)} fill={this.hasRadius() ? color : null} stroke={this.hasRadius() ? null : color} strokeWidth={2} />;
+    const planetSVG = <svg height={limit ? Math.min(diameter, 80) : diameter} width={limit ? Math.min(diameter, 150) : diameter}>{circleSVG}{this.hasRadius() ? null : <text x={radius} y={radius} fill='white' textAnchor='middle' dy='.3em'>?</text>}</svg>
 
     return planetSVG;
   }
@@ -72,11 +56,37 @@ class Planet extends React.Component {
     return this.props.isSelected ? this.props.height * 1.5 : 0;
   }
 
+  isConfirmed() {
+    return this.props.planet.planet_status === 'Confirmed';
+  }
+
+  isUnconfirmed() {
+    return this.props.planet.planet_status === 'Unconfirmed';
+  }
+
+  isCandidate() {
+    return this.props.planet.planet_status === 'Candidate';
+  }
+
+  renderStatus() {
+    let color;
+
+    if(this.isConfirmed()) {
+      color = 'green';
+    } else if(this.isUnconfirmed()) {
+      color = 'blue';
+    } else {
+      color = '';
+    }
+
+    return <Label color={color}>{this.props.planet.planet_status}</Label>
+  }
+
   renderDetails() {
     const planet = this.props.planet;
     return (
       <div style={{ textAlign: 'center', display: 'block', position: 'absolute', left: 0, right: 0, height: this.getDetailsHeight(), marginTop: this.getDetailsHeight() * -1, backgroundColor: '#545A70' }}>
-        <h2 style={{ paddingTop: 10, fontFamily: '\'Roboto\', sans-serif', fontWeight: 100, width: '100%', textAlign: 'center', color: 'white' }}>{planet.NAME}</h2>
+        <h2 style={{ paddingTop: 10, fontFamily: '\'Roboto\', sans-serif', fontWeight: 100, width: '100%', textAlign: 'center', color: 'white' }}>{planet.name}</h2>
         <Table textAlign='center' style={{ marginRight: 'auto', marginLeft: 'auto' }} basic='very' celled collapsing unstackable inverted>
           <Table.Body>
             <Table.Row>
@@ -87,13 +97,13 @@ class Planet extends React.Component {
                 Radius
               </Table.Cell>
               <Table.Cell>
-                Density
+                Mass
               </Table.Cell>
               <Table.Cell>
-                Orbital Period
+                Discovered
               </Table.Cell>
               <Table.Cell>
-                First Referenced
+                Status
               </Table.Cell>
             </Table.Row>
             <Table.Row>
@@ -101,16 +111,16 @@ class Planet extends React.Component {
                 {this.renderPlanet(true)}
               </Table.Cell>
               <Table.Cell>
-                {this.hasRadius() ? Math.round(planet.R * 69911) + ' km' : 'Unknown'}
+                {this.hasRadius() ? planet.radius + ' Jupiter radius' : 'Unknown'}
               </Table.Cell>
               <Table.Cell>
-                {this.hasDensity() ? planet.DENSITY + ' gm/cm³' : 'Unknown'}
+                {planet.mass ? planet.mass + ' Jupiter masses' : 'Unknown'}
               </Table.Cell>
               <Table.Cell>
-                {planet.PER > this.epsilon ? planet.PER + ' days' : 'Unknown'}
+                {planet.discovered}
               </Table.Cell>
               <Table.Cell>
-                <a style={{ color: 'white' }} href={planet.FIRSTURL}>{planet.FIRSTREF}</a>
+                {this.renderStatus()}
               </Table.Cell>
             </Table.Row>
           </Table.Body>
@@ -131,7 +141,7 @@ class Planet extends React.Component {
       <div>
       <a href='#' style={{ textDecoration: 'none' }} onClick={e => { e.preventDefault(); this.props.onClick(e); }}>
       <div className='planet' style={itemStyle}>
-        <h3 style={{ fontFamily: '\'Roboto\', sans-serif', fontWeight: 100, width: '100%', textAlign: 'center' }}>{planet.NAME}</h3>
+        <h3 style={{ fontFamily: '\'Roboto\', sans-serif', fontWeight: 100, width: this.props.width, maxWidth: this.props.width, overflow: 'hidden', textAlign: 'center', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{planet.name}</h3>
         <div style={{ textAlign: 'center' }}>{this.renderPlanet(true)}</div>
         { this.props.isSelected ? this.renderArrow() : null }
       </div>
@@ -144,10 +154,12 @@ class Planet extends React.Component {
 
 Planet.propTypes = {
   planet: PropTypes.object.isRequired,
+  scale: PropTypes.number,
   width: PropTypes.number,
   height: PropTypes.number,
   onClick: PropTypes.func,
-  isSelected: PropTypes.bool
+  isSelected: PropTypes.bool,
+  colourMethod: PropTypes.string
 }
 
 export default Planet

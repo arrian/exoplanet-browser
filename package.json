@@ -27,6 +27,7 @@
   "dependencies": {
     "normalizr": "^3.2.3",
     "papaparse": "^4.3.3",
+    "rc-slider": "^8.1.3",
     "react": "^15.5.0",
     "react-dom": "^15.5.0",
     "react-infinite-scroller": "^1.0.12",
@@ -35,6 +36,7 @@
     "redux": "^3.6.0",
     "redux-devtools-extension": "^2.13.2",
     "redux-thunk": "^2.2.0",
+    "scale-color-perceptual": "^1.1.2",
     "semantic-ui-react": "^0.68.5"
   },
   "devDependencies": {

@@ -5,16 +5,11 @@ import InfiniteScroll from 'react-infinite-scroller'
 import { loadMorePlanets, selectPlanet, deselectPlanet } from '../actions'
 import { Loader } from 'semantic-ui-react'
 
-function renderPlanets(planets, selectPlanet, deselectPlanet, selection) {
-	return planets.map(planet => <div style={{ display: 'inline-block' }} key={planet.NAME}><Planet planet={planet} width={150} height={150} isSelected={selection === planet.NAME} onClick={() => selection === planet.NAME ? deselectPlanet() : selectPlanet(planet.NAME)} /></div>);
-}
-
-const Planets = ({ planets, loading, error, loadMorePlanets, isMore, selectPlanet, deselectPlanet, selection }) => (
+const Planets = ({ planets, loading, error, loadMorePlanets, isMore, selectPlanet, deselectPlanet, selection, scale, colourMethod }) => (
 	<div style={{ textAlign: 'center' }}>
-		<Loader active={loading}></Loader>
-		<InfiniteScroll initialLoad={false} pageStart={0} loadMore={loadMorePlanets} hasMore={isMore} loader={<div className="loader">Loading ...</div>}>
-			{renderPlanets(planets, selectPlanet, deselectPlanet, selection)}
-		</InfiniteScroll>
+    <InfiniteScroll initialLoad={false} pageStart={0} loadMore={loadMorePlanets} hasMore={isMore} loader={<div className="loader">Loading ...</div>}>
+      {planets.map(planet => <div style={{ display: 'inline-block' }} key={planet.name}><Planet planet={planet} width={150} height={150} scale={scale} colourMethod={colourMethod} isSelected={selection === planet.name} onClick={() => selection === planet.name ? deselectPlanet() : selectPlanet(planet.name)} /></div>)}
+    </InfiniteScroll>
 	</div>
 )
 
@@ -27,10 +22,12 @@ Planets.propTypes = {
 
 const mapStateToProps = (state) => ({
   planets: state.planets.results.slice(0, state.planets.count).map(planetName => state.planets.all[planetName]),
+  scale: state.planets.scale,
   loading: state.planets.loading,
   error: state.planets.error,
   isMore: state.planets.isMore,
-  selection: state.planets.selection
+  selection: state.planets.selection,
+  colourMethod: state.planets.colourMethod
 })
 
 const mapDispatchToProps = ({

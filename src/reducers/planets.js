@@ -1,5 +1,6 @@
+import { SortMethod, ColourMethod } from '../actions'
 
-const planets = (state = { all: {}, query: '', results: [], count: 0, error: false, loading: true, isMore: false, selection: null }, action) => {
+const planets = (state = {all: {}, query: '', results: [], count: 0, error: false, loading: true, isMore: false, selection: null, scale: 1.0, colourMethod: ColourMethod.TEMPERATURE, sortMethod: SortMethod.BEST_MATCH }, action) => {
 	switch(action.type) {
 	case 'REFRESH_PLANETS':
 		return Object.assign({}, state, { all: action.planets, results: [], count: 0, loading: false, isMore: false });
@@ -16,6 +17,12 @@ const planets = (state = { all: {}, query: '', results: [], count: 0, error: fal
 		return Object.assign({}, state, { selection: action.selection });
 	case 'DESELECT_PLANET':
 		return Object.assign({}, state, { selection: null });
+	case 'SCALE_PLANETS':
+		return Object.assign({}, state, { scale: action.scale });
+	case 'COLOUR_PLANETS':
+		return Object.assign({}, state, { colourMethod: action.method });
+	case 'SORT_PLANETS':
+		return Object.assign({}, state, { sortMethod: action.method });
 	default:
 		return state;
 	}

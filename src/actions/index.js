@@ -1,4 +1,5 @@
 const DEFAULT_RESULT_SIZE = 200;
+const INTERESTING_DEFAULT_QUERY = 'k0';
 
 var index = window.elasticlunr(function () {
 	this.addField('name');
@@ -13,6 +14,28 @@ export const refreshPlanets = (planets) => {
 		type: 'REFRESH_PLANETS',
 		planets
 	}
+};
+
+export function loadPlanets(csv) {
+  return (dispatch, getState) => {
+  	return new Promise((resolve, reject) => {
+		window.Papa.parse('./exoplanet.eu_catalog.csv', {
+			download: true,
+			header: true,
+			complete: function(results) {
+				const planets = {};
+				results.data.forEach(planet => {
+					planet.radius = planet.radius ? parseFloat(planet.radius) : null;
+					planet.temp_calculated = planet.temp_calculated ? parseFloat(planet.temp_calculated) : null;
+					planet.mass = planet.mass ? parseFloat(planet.mass) : null;
+					planets[planet.name] = planet;
+				});
+				dispatch(refreshPlanets(planets));
+				dispatch(searchPlanets(getState().planets.query || INTERESTING_DEFAULT_QUERY));
+			}
+		});
+	});
+  }
 };
 
 export const queryPlanets = (query) => ({
@@ -42,8 +65,21 @@ export function loadMorePlanets() {
 	}
 }
 
-function search(planets, query) {
-	return query === '' ? Object.keys(planets) : index.search(query, {expand: true}).map(result => result.doc.name);
+function sort(planets, results, sortFn) {
+	let sortedResults = [ ...results ];
+
+	return sortedResults.map(key => planets[key]).sort(sortFn).map(planet => planet.name);
+}
+
+function search(planets, query, sortMethod) {
+	var results = query === '' ? Object.keys(planets) : index.search(query, {expand: true}).map(result => result.doc.name);
+
+	if(sortMethod === SortMethod.NAME_A_Z) results = sort(planets, results, (a,b) => a.name.localeCompare(b.name));
+	else if(sortMethod === SortMethod.NAME_Z_A) results = sort(planets, results, (a,b) => a.name.localeCompare(b.name) * -1);
+	else if(sortMethod === SortMethod.RADIUS_HIGH_LOW) results = sort(planets, results, (a,b) => ((a.radius || Number.MIN_VALUE) - (b.radius || Number.MIN_VALUE)) * -1);
+	else if(sortMethod === SortMethod.RADIUS_LOW_HIGH) results = sort(planets, results, (a,b) => (a.radius || Number.MAX_VALUE) - (b.radius || Number.MAX_VALUE));
+
+	return results;
 }
 
 export function searchPlanets(query) {
@@ -52,7 +88,7 @@ export function searchPlanets(query) {
     
     return new Promise((resolve, reject) => {
     	try {
-			const results = search(getState().planets.all, query);
+			const results = search(getState().planets.all, query, getState().planets.sortMethod);
 			setTimeout(function(){
 			    dispatch(resultPlanets(query, results, DEFAULT_RESULT_SIZE));
 				resolve();
@@ -74,4 +110,38 @@ export const selectPlanet = (planetName) => ({
 export const deselectPlanet = () => ({
 	type: 'DESELECT_PLANET'
 });
+
+export const scalePlanets = (scale) => ({
+	type: 'SCALE_PLANETS',
+	scale
+});
+
+export function sortPlanets(method) {
+  return (dispatch, getState) => {
+  	dispatch({
+		type: 'SORT_PLANETS',
+		method
+	});
+    dispatch(searchPlanets(getState().planets.query))
+  }
+}
+
+export const SortMethod = {
+	BEST_MATCH: 'BEST_MATCH',
+	NAME_A_Z: 'NAME_A_Z',
+	NAME_Z_A: 'NAME_Z_A',
+	RADIUS_HIGH_LOW: 'RADIUS_HIGH_LOW',
+	RADIUS_LOW_HIGH: 'RADIUS_LOW_HIGH'
+};
+
+export const colourPlanets = (method) => ({
+	type: 'COLOUR_PLANETS',
+	method
+});
+
+export const ColourMethod = {
+	TEMPERATURE: 'TEMPERATURE',
+	MASS: 'MASS',
+	STATUS: 'STATUS'
+};
 

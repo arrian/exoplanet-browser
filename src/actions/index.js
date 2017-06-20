@@ -16,6 +16,21 @@ export const refreshPlanets = (planets) => {
 	}
 };
 
+function getDefaultPlanets() {
+	return [
+		{ name: 'Mercury', radius: 0.03488721374, temp_calculated: 700, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Venus', radius: 0.08463884071, temp_calculated: 753, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Earth', radius: 0.08921277905, temp_calculated: 287, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Mars', radius: 0.04750181839, temp_calculated: 210, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Jupiter', radius: 1, temp_calculated: 143, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Saturn', radius: 0.843003413, temp_calculated: 143, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Uranus', radius: 0.3575085324, temp_calculated: 73, mass: null, discovered: '1781', planet_status: 'Confirmed' },
+		{ name: 'Neptune', radius: 0.345129525, temp_calculated: 73, mass: null, discovered: '1846', planet_status: 'Confirmed' },
+		{ name: 'Pluto', radius: 0.01671515694, temp_calculated: 45, mass: null, discovered: '-', planet_status: 'Confirmed' },
+		{ name: 'Makemake', radius: 0.0105705826, temp_calculated: 30, mass: null, discovered: '2005', planet_status: 'Confirmed' }
+	];
+}
+
 export function loadPlanets(csv) {
   return (dispatch, getState) => {
   	return new Promise((resolve, reject) => {
@@ -30,6 +45,9 @@ export function loadPlanets(csv) {
 					planet.mass = planet.mass ? parseFloat(planet.mass) : null;
 					planets[planet.name] = planet;
 				});
+
+				getDefaultPlanets().forEach(planet => planets[planet.name] = planet);
+
 				dispatch(refreshPlanets(planets));
 				dispatch(searchPlanets(getState().planets.query || INTERESTING_DEFAULT_QUERY));
 			}
@@ -140,6 +158,7 @@ export const colourPlanets = (method) => ({
 });
 
 export const ColourMethod = {
+	NONE: 'NONE',
 	TEMPERATURE: 'TEMPERATURE',
 	MASS: 'MASS',
 	STATUS: 'STATUS'

@@ -32,9 +32,11 @@ class Planet extends React.Component {
     
     if(this.props.colourMethod === ColourMethod.MASS) return planet.mass ? scale.magma(Math.max(0.0, Math.min(1.0, planet.mass / 30))) : 'gray';
     
-    if(this.isConfirmed()) return '#21BA45';
-    else if(this.isUnconfirmed()) return '#2185D0';
-    else return 'gray';
+    if(this.props.colourMethod === ColourMethod.STATUS) {
+      if(this.isConfirmed()) return '#21BA45';
+      else if(this.isUnconfirmed()) return '#2185D0';
+    }
+    return 'gray';
   }
 
   renderArrow() {

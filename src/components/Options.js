@@ -13,6 +13,7 @@ const Options = ({ onScaleChange, onSortChange, onColourChange, loading, scale, 
 					<div style={{ display: 'flex' }}>
 						Colour by
 						<Dropdown value={colourMethod} onChange={onColourChange} style={{ marginLeft: 20 }} options={[
+							{ text: 'No Colour', value: ColourMethod.NONE },
 							{ text: 'Temperature', value: ColourMethod.TEMPERATURE },
 							{ text: 'Mass', value: ColourMethod.MASS },
 							{ text: 'Status', value: ColourMethod.STATUS }
